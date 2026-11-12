@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#101b2d">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' blob: data:; connect-src 'self' https://cdn.jsdelivr.net https://tessdata.projectnaptha.com https://generativelanguage.googleapis.com; worker-src 'self' blob: https://cdn.jsdelivr.net; media-src 'self' blob:">
+    <meta name="description" content="Capture, identify, and organize electronic components in your browser.">
+    <title>Component Log</title>
+    <link rel="stylesheet" href="./styles.css">
+    <script type="module" src="./app.js?v=9"></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="./" aria-label="Component Log home">
+        <span class="brand-mark" aria-hidden="true">C</span>
+        <span>Component Log</span>
+      </a>
+      <div class="header-status">
+        <span id="headerStatus" class="save-indicator"><span class="save-dot"></span> Saved on this device</span>
+        <span class="header-divider"></span>
+        <span class="device-label">LOCAL INVENTORY</span>
+      </div>
+    </header>
+
+    <main>
+      <div class="page-heading">
+        <div>
+          <p class="eyebrow">ELECTRONICS BENCH INVENTORY</p>
+          <h1>Component Log</h1>
+          <p class="lead">Scan parts, review what you found, and keep a useful record of what you own.</p>
+        </div>
+        <span class="local-badge"><span aria-hidden="true">◈</span> Private to this browser</span>
+      </div>
+
+      <nav class="tabs" role="tablist" aria-label="Main navigation">
+        <button class="tab-button active" id="tab-tools" type="button" role="tab" aria-selected="true" aria-controls="toolsView">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 7.5a5.5 5.5 0 0 1-7.5 5.1l-6.2 6.2a2.1 2.1 0 0 1-3-3l6.2-6.2A5.5 5.5 0 0 1 17.4 3l-3.1 3.1.3 2.3 2.3.3L20 5.6A5.5 5.5 0 0 1 21 7.5Z"/></svg>
+          Tools
+        </button>
+        <button class="tab-button" id="tab-session" type="button" role="tab" aria-selected="false" aria-controls="sessionView">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4.5h16a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-13a1 1 0 0 1 1-1Zm1 3v2h5v-2H5Zm7 0v2h7v-2h-7ZM5 12v2h5v-2H5Zm7 0v2h7v-2h-7ZM5 16v1.5h14V16H5Z"/></svg>
+          Session
+          <span id="sessionTabCount" class="tab-count" hidden>0</span>
+        </button>
+        <button class="tab-button" id="tab-history" type="button" role="tab" aria-selected="false" aria-controls="historyView">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4.5h16a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-13a1 1 0 0 1 1-1Zm2 3v3h12v-3H6Zm0 5v4h3v-4H6Zm5 0v4h7v-4h-7Z"/></svg>
+          History
+          <span id="historyTabCount" class="tab-count" hidden>0</span>
+        </button>
+        <span class="tab-spacer"></span>
+        <button class="tab-button utility-tab" id="tab-about" type="button" role="tab" aria-selected="false" aria-controls="aboutView">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5a9.5 9.5 0 1 0 0 19 9.5 9.5 0 0 0 0-19Zm0 17a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15ZM11 10h2v6h-2v-6Zm1-3.5a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4Z"/></svg>
+          About
+        </button>
+        <button class="tab-button utility-tab" id="tab-config" type="button" role="tab" aria-selected="false" aria-controls="configView">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m19.4 13 .1-1-.1-1 2-1.6-2-3.4-2.4 1a7.7 7.7 0 0 0-1.7-1L15 3H9l-.4 3a7.7 7.7 0 0 0-1.7 1l-2.4-1-2 3.4 2 1.6-.1 1 .1 1-2 1.6 2 3.4 2.4-1a7.7 7.7 0 0 0 1.7 1L9 21h6l.4-3a7.7 7.7 0 0 0 1.7-1l2.4 1 2-3.4-2.1-1.6ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg>
+          Config
+        </button>
+      </nav>
+
+      <section id="toolsView" class="tab-panel" role="tabpanel" aria-labelledby="tab-tools">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">CAPTURE TOOLS</p>
+            <h2>Start a scan</h2>
+            <p>Photograph one or more electronic components. Each shot is processed and added to your open session.</p>
+          </div>
+        </div>
+
+        <div id="toolsLanding" class="tools-layout">
+          <div class="tool-primary-card">
+            <div class="tool-icon scanner-icon" aria-hidden="true">
+              <svg viewBox="0 0 48 48"><path d="M16 7h16l3 5h6a3 3 0 0 1 3 3v22a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V15a3 3 0 0 1 3-3h6l3-5Zm8 9a9 9 0 1 0 0 18 9 9 0 0 0 0-18Zm0 3.5a5.5 5.5 0 1 1 0 11 5.5 5.5 0 0 1 0-11Z"/></svg>
+            </div>
+            <div class="tool-card-copy">
+              <span class="tool-kicker">AVAILABLE NOW</span>
+              <h3>Scan components</h3>
+              <p>Take a photo to find separate parts and read their package markings.</p>
+              <ul class="tool-feature-list">
+                <li>One component or several in one shot</li>
+                <li>Fast repeat photos in the same session</li>
+                <li>Review and archive when you are ready</li>
+              </ul>
+              <button id="openScannerButton" class="button button-primary" type="button">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4.5 7.7 6H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-2.7L15 4.5H9Zm3 12.8a4.3 4.3 0 1 1 0-8.6 4.3 4.3 0 0 1 0 8.6Z"/></svg>
+                Open scanner
+              </button>
+              <button id="choosePhotosButton" class="text-button choose-photos-button" type="button">or choose photos from this device</button>
+              <input id="photoFileInput" class="visually-hidden" type="file" accept="image/*" multiple>
+            </div>
+          </div>
+
+          <div class="future-tools">
+            <article class="tool-future-card">
+              <div class="future-tool-heading">
+                <span class="tool-icon small-tool-icon" aria-hidden="true">▦</span>
+                <span class="future-label">PLANNED</span>
+              </div>
+              <h3>Multi capture</h3>
+              <p>Capture a larger batch of parts and review them together.</p>
+              <button class="button button-disabled" type="button" disabled>Coming later</button>
+            </article>
+            <article class="tool-future-card">
+              <div class="future-tool-heading">
+                <span class="tool-icon small-tool-icon video-icon" aria-hidden="true">▷</span>
+                <span class="future-label">PLANNED</span>
+              </div>
+              <h3>Video capture</h3>
+              <p>Keep a live preview open as newly seen parts enter the session.</p>
+              <button class="button button-disabled" type="button" disabled>Coming later</button>
+            </article>
+          </div>
+        </div>
+
+        <div id="scannerPanel" class="scanner-panel" hidden>
+          <div class="scanner-topline">
+            <button id="closeScannerButton" class="text-button" type="button">← Back to tools</button>
+            <span id="scannerSessionLabel" class="session-live-badge"><span class="live-dot"></span> SESSION OPEN</span>
+          </div>
+          <h2>Camera scanner</h2>
+          <p class="compact-lead">Place components apart on a plain surface. Each photo is read and sent to Session automatically.</p>
+          <div class="camera-frame">
+            <video id="cameraPreview" playsinline muted autoplay aria-label="Live camera preview"></video>
+            <div id="cameraPlaceholder" class="camera-placeholder">
+              <div class="camera-placeholder-icon" aria-hidden="true">◎</div>
+              <p>Start the camera to preview your bench.</p>
+              <button id="enableCameraButton" class="button button-secondary" type="button">Enable camera</button>
+            </div>
+            <div class="camera-label"><span class="live-dot"></span> Camera preview</div>
+          </div>
+          <div class="scanner-controls">
+            <button id="captureNowButton" class="button button-primary capture-button" type="button" disabled>
+              <span class="shutter" aria-hidden="true"></span>
+              Capture &amp; process
+            </button>
+            <button id="scannerChoosePhotosButton" class="button button-secondary" type="button">Choose photos</button>
+            <input id="scannerFileInput" class="visually-hidden" type="file" accept="image/*" multiple>
+            <button id="openSessionButton" class="button button-outline" type="button">View session <span id="scannerSessionCount" class="inline-count">0</span></button>
+          </div>
+          <p id="captureStatus" class="status-line" role="status" aria-live="polite">Camera is off.</p>
+          <div id="progressTrack" class="progress-track" hidden><progress id="progressBar" class="progress-bar" max="100" value="0" aria-label="Photo processing progress"></progress></div>
+          <div class="capture-note"><strong>Tip</strong><span>Use good light and leave a little space between parts. Browser OCR downloads when first needed. Recognition is a suggestion—check the marking before archiving.</span></div>
+        </div>
+      </section>
+
+      <section id="sessionView" class="tab-panel" role="tabpanel" aria-labelledby="tab-session" hidden>
+        <div class="panel-heading session-heading">
+          <div>
+            <p class="eyebrow">CURRENT CAPTURE BATCH</p>
+            <h2>Session <span id="sessionCount" class="count-pill">0 scans</span></h2>
+            <p>Review every scan. Delete unwanted rows, check warnings, then archive the ones you want to keep.</p>
+          </div>
+          <div class="panel-actions">
+            <button id="sessionScanButton" class="button button-secondary" type="button">Scan more</button>
+            <button id="archiveButton" class="button button-primary" type="button" disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3h16a1 1 0 0 1 1 1v4H3V4a1 1 0 0 1 1-1Zm-1 7h18v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V10Zm5 3v2h8v-2H8Z"/></svg>
+              Archive session
+            </button>
+          </div>
+        </div>
+        <div id="sessionNotice" class="notice-line" role="status" aria-live="polite"></div>
+        <div class="table-toolbar">
+          <span id="sessionSummary" class="table-summary">No scans yet</span>
+          <span class="table-hint"><span class="legend-dot duplicate-legend"></span> Duplicate <span class="legend-dot bad-legend"></span> Check marking</span>
+        </div>
+        <div class="table-scroll">
+          <table class="data-table session-table">
+            <thead><tr><th>Photo</th><th>Part / marking</th><th>Recognized text</th><th>Confidence</th><th>Captured</th><th>Status</th><th><span class="visually-hidden">Actions</span></th></tr></thead>
+            <tbody id="sessionTableBody"></tbody>
+          </table>
+        </div>
+        <div id="sessionEmpty" class="empty-state table-empty">
+          <div class="empty-icon" aria-hidden="true">⌕</div>
+          <h3>This session is empty</h3>
+          <p>Open the scanner to capture components. Your results will appear here as they are recognized.</p>
+          <button class="button button-primary" type="button" data-open-scanner>Open scanner</button>
+        </div>
+        <div class="table-footer">
+          <span id="sessionFooterCount">0 scans</span>
+          <span>Session saves automatically on this device.</span>
+        </div>
+      </section>
+
+      <section id="historyView" class="tab-panel" role="tabpanel" aria-labelledby="tab-history" hidden>
+        <div class="panel-heading session-heading">
+          <div>
+            <p class="eyebrow">YOUR ARCHIVED COMPONENTS</p>
+            <h2>History <span id="historyCount" class="count-pill">0 components</span></h2>
+            <p>Long-term inventory of the parts you own. Search, review details, remove records, or export.</p>
+          </div>
+          <button id="historyExportButton" class="button button-outline" type="button" disabled>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a1 1 0 0 1 1 1v9.6l2.3-2.3a1 1 0 0 1 1.4 1.4l-4 4a1 1 0 0 1-1.4 0l-4-4a1 1 0 0 1 1.4-1.4l2.3 2.3V4a1 1 0 0 1 1-1ZM5 18a1 1 0 0 1 1 1v1h12v-1a1 1 0 1 1 2 0v2a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1Z"/></svg>
+            Export Markdown
+          </button>
+        </div>
+        <div class="history-controls">
+          <label class="search-box history-search">
+            <span class="visually-hidden">Filter history</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.8 3a7.8 7.8 0 1 0 4.8 13.95l4.42 4.42a1 1 0 0 0 1.42-1.42l-4.42-4.42A7.8 7.8 0 0 0 10.8 3Zm0 2a5.8 5.8 0 1 1 0 11.6 5.8 5.8 0 0 1 0-11.6Z"/></svg>
+            <input id="historySearch" type="search" placeholder="Filter any part of a component record">
+            <kbd>⌘ K</kbd>
+          </label>
+          <label class="page-size-label" for="pageSizeSelect">Rows
+            <select id="pageSizeSelect">
+              <option value="25">25</option>
+              <option value="50" selected>50</option>
+              <option value="100">100</option>
+            </select>
+            per page
+          </label>
+        </div>
+        <div id="historyNotice" class="notice-line" role="status" aria-live="polite"></div>
+        <div class="table-toolbar">
+          <span id="historySummary" class="table-summary">No archived components</span>
+          <span class="table-hint">Search matches part number, markings, details, and datasheet links.</span>
+        </div>
+        <div class="table-scroll">
+          <table class="data-table history-table">
+            <thead><tr><th>Component</th><th>Description / manufacturer</th><th>Items</th><th>Latest capture</th><th><span class="visually-hidden">Actions</span></th></tr></thead>
+            <tbody id="historyTableBody"></tbody>
+          </table>
+        </div>
+        <div id="historyEmpty" class="empty-state table-empty">
+          <div class="empty-icon" aria-hidden="true">▤</div>
+          <h3>Your history starts here</h3>
+          <p>Capture components and archive them from Session to build your inventory.</p>
+          <button class="button button-primary" type="button" data-open-scanner>Start a scan</button>
+        </div>
+        <div class="table-footer history-footer">
+          <span id="historyRange">0–0 of 0 components</span>
+          <div class="pagination-controls">
+            <button id="previousPageButton" class="page-button" type="button" aria-label="Previous page" disabled>←</button>
+            <span id="pageIndicator" class="page-indicator">Page 1 of 1</span>
+            <button id="nextPageButton" class="page-button" type="button" aria-label="Next page" disabled>→</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="aboutView" class="tab-panel utility-panel" role="tabpanel" aria-labelledby="tab-about" hidden>
+        <div class="panel-heading">
+          <div><p class="eyebrow">ABOUT THIS TOOL</p><h2>Built for your electronics bench</h2><p>Component Log helps organize the parts you capture with your phone camera.</p></div>
+        </div>
+        <div class="about-grid">
+          <article class="about-card"><span class="about-card-icon">⌗</span><h3>Markings, not magic</h3><p>Browser OCR reads visible package markings. The result is a starting point for your review, not a guaranteed identity. Verify datasheets before relying on pinouts or ratings.</p></article>
+          <article class="about-card"><span class="about-card-icon">▣</span><h3>Saved on this device</h3><p>Session scans, archived parts, and photos stay in this browser's IndexedDB; the optional AI key uses local storage. Clearing site data removes them. There is no account or cloud sync.</p></article>
+          <article class="about-card"><span class="about-card-icon">◈</span><h3>AI details are optional</h3><p>Gemini can look up extra information when configured. Your key is sent to Google only when you request details. Review AI answers against manufacturer sources.</p></article>
+        </div>
+        <div class="about-note"><strong>Recognition limits</strong><p>Small, worn, rotated, shadowed, or low-contrast markings can be misread. The current scanner handles one or more visible components in still photos; multi and continuous video modes are planned.</p></div>
+        <p class="about-version">Browser-based component inventory · No installation required</p>
+      </section>
+
+      <section id="configView" class="tab-panel utility-panel" role="tabpanel" aria-labelledby="tab-config" hidden>
+        <div class="panel-heading">
+          <div><p class="eyebrow">PREFERENCES</p><h2>Configuration</h2><p>Manage optional AI details. Scanning and inventory work without an AI key.</p></div>
+        </div>
+        <div class="config-card">
+          <div class="config-card-heading">
+            <div class="config-provider-icon" aria-hidden="true">✦</div>
+            <div><span class="tool-kicker">OPTIONAL PROVIDER</span><h3>Google Gemini</h3><p>Ask for a part description, pinout, manufacturer, or datasheet link.</p></div>
+            <span id="keySavedBadge" class="key-saved-badge" hidden><span class="save-dot"></span> KEY SAVED</span>
+          </div>
+          <div class="warning-copy"><strong>Browser key notice</strong><br>This static app cannot protect a secret like a server can. Your saved key is accessible to this app and browser environment. Use a restricted key, manage quotas, and remove it when finished.</div>
+          <form id="keyForm" class="config-form">
+            <label class="field-label" for="geminiKeyInput">Gemini API key</label>
+            <div class="key-input-row">
+              <input id="geminiKeyInput" class="text-input" type="password" autocomplete="off" spellcheck="false" placeholder="Paste your Gemini API key">
+              <button id="toggleKeyVisibility" class="button button-outline" type="button">Show</button>
+            </div>
+            <p class="field-help">Saved in local browser storage on this device. Sent directly to Google's Gemini API only when you request details for a part. Never included in exports.</p>
+            <div id="keyStatus" class="status-line" role="status" aria-live="polite"></div>
+            <div class="config-actions">
+              <button id="removeKeyButton" class="button button-outline" type="button" disabled>Remove saved key</button>
+              <button class="button button-primary" type="submit">Save key</button>
+            </div>
+          </form>
+          <div class="provider-note"><strong>Authentication type:</strong> Gemini uses an API key here, not OAuth. Other AI providers can be considered later if they have a supported browser-safe or user-configurable integration.</div>
+        </div>
+      </section>
+    </main>
+
+    <dialog id="detailsDialog" class="dialog-card details-dialog">
+      <div class="dialog-heading">
+        <div><p class="eyebrow">COMPONENT DETAILS</p><h2 id="detailsTitle">Details</h2></div>
+        <button class="icon-button dialog-close" type="button" data-close-dialog="detailsDialog" aria-label="Close">×</button>
+      </div>
+      <div id="detailsContent" class="details-content"></div>
+      <div class="dialog-actions"><button class="button button-outline" type="button" data-close-dialog="detailsDialog">Close</button></div>
+    </dialog>
+
+    <dialog id="deleteDialog" class="dialog-card confirm-dialog">
+      <form method="dialog">
+        <div class="dialog-heading">
+          <div><p class="eyebrow">REMOVE FROM HISTORY</p><h2>Delete this component?</h2></div>
+          <button class="icon-button dialog-close" type="button" data-close-dialog="deleteDialog" aria-label="Close">×</button>
+        </div>
+        <p id="deleteMessage" class="dialog-copy">This removes the component and its archived scans from this device.</p>
+        <div class="dialog-actions"><button class="button button-outline" type="button" data-close-dialog="deleteDialog">Cancel</button><button id="confirmDeleteButton" class="button button-danger" type="button">Delete permanently</button></div>
+      </form>
+    </dialog>
+
+    <footer class="site-footer"><p>Component Log · Verify component identities and pinouts against manufacturer documentation.</p></footer>
+  </body>
+</html>

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Component Log OCR benchmark</title>
+    <link rel="stylesheet" href="../styles.css">
+    <script type="module" src="./ocr-benchmark.js?v=4"></script>
+  </head>
+  <body>
+    <main>
+      <p class="eyebrow">TEST TOOLS</p>
+      <h1>OCR benchmark</h1>
+      <p>Runs the browser OCR against the 96 labeled sample photos without changing your inventory.</p>
+      <button id="runBenchmark" class="button button-primary" type="button">Run all 96 photos</button>
+      <p id="benchmarkStatus" role="status" aria-live="polite">Ready.</p>
+      <progress id="benchmarkProgress" max="96" value="0" hidden></progress>
+      <div id="benchmarkSummary" aria-live="polite"></div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Photo</th>
+              <th>Expected</th>
+              <th>OCR result</th>
+              <th>Exact</th>
+              <th>Within one edit</th>
+            </tr>
+          </thead>
+          <tbody id="benchmarkRows"></tbody>
+        </table>
+      </div>
+    </main>
+  </body>
+</html>
