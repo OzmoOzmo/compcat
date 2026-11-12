@@ -232,6 +232,15 @@ kbd { flex: 0 0 auto; padding: 3px 5px; border: 1px solid #e5e9ef; border-radius
 
 .dialog-card { width: min(510px, calc(100% - 28px)); max-height: min(85vh, 700px); padding: 20px; border: 1px solid #dce3ed; border-radius: 13px; color: var(--ink); box-shadow: 0 18px 60px #101b2d35; }
 .dialog-card::backdrop { background: #101b2d91; backdrop-filter: blur(3px); }
+.session-item-dialog { width: min(980px, calc(100% - 24px)); max-height: min(94vh, 900px); overflow-y: auto; }
+.session-item-layout { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(280px, .85fr); align-items: start; gap: 20px; }
+.session-item-photo-wrap { min-height: 220px; display: grid; place-items: center; overflow: hidden; border: 1px solid var(--line); border-radius: 9px; background: #f2f4f7; }
+.session-item-photo { width: 100%; max-height: min(68vh, 650px); object-fit: contain; }
+.session-item-fields { min-width: 0; }
+.session-item-textarea { min-height: 72px; resize: vertical; font-family: inherit; line-height: 1.45; }
+.session-item-meta { margin: 11px 0 0; color: var(--muted); font-size: 10px; }
+.session-thumbnail-button { padding: 0; cursor: zoom-in; }
+.session-thumbnail-button:focus-visible { outline: 3px solid #84a8f1; outline-offset: 2px; }
 .dialog-heading { display: flex; align-items: start; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
 .dialog-heading h2 { margin: 0; font-size: 19px; }
 .dialog-heading .icon-button { border-color: var(--line); color: #627087; }
@@ -293,6 +302,9 @@ body.scanner-open .capture-note { flex: 0 0 auto; margin: 0; padding: 7px 9px; }
   .about-card { display: grid; grid-template-columns: 34px 1fr; column-gap: 9px; }
   .about-card-icon { grid-row: span 2; margin: 0; }
   .about-card h3 { align-self: center; }
+  .session-item-layout { grid-template-columns: 1fr; gap: 14px; }
+  .session-item-photo-wrap { min-height: 160px; max-height: 38vh; }
+  .session-item-photo { max-height: 38vh; }
 }
 
 @media (max-width: 480px) {

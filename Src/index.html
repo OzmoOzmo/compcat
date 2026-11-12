@@ -8,7 +8,7 @@
     <meta name="description" content="Capture, identify, and organize electronic components in your browser.">
     <title>Component Log</title>
     <link rel="stylesheet" href="./styles.css?v=4">
-    <script type="module" src="./app.js?v=14"></script>
+    <script type="module" src="./app.js?v=16"></script>
   </head>
   <body>
     <header class="site-header">
@@ -168,7 +168,7 @@
         <div id="sessionNotice" class="notice-line" role="status" aria-live="polite"></div>
         <div class="table-toolbar">
           <span id="sessionSummary" class="table-summary">No scans yet</span>
-          <span class="table-hint"><span class="legend-dot duplicate-legend"></span> Duplicate <span class="legend-dot bad-legend"></span> Check marking</span>
+          <span class="table-hint"><span class="legend-dot duplicate-legend"></span> Duplicate <span class="legend-dot bad-legend"></span> Check marking · Issues auto-selected</span>
         </div>
         <div class="table-scroll">
           <table class="data-table session-table">
@@ -292,6 +292,40 @@
       </div>
       <div id="detailsContent" class="details-content"></div>
       <div class="dialog-actions"><button class="button button-outline" type="button" data-close-dialog="detailsDialog">Close</button></div>
+    </dialog>
+
+    <dialog id="sessionItemDialog" class="dialog-card session-item-dialog">
+      <form id="sessionItemForm">
+        <div class="dialog-heading">
+          <div><p class="eyebrow">SESSION SCAN</p><h2 id="sessionItemTitle">Edit scan</h2></div>
+          <button class="icon-button dialog-close" type="button" data-close-dialog="sessionItemDialog" aria-label="Close">×</button>
+        </div>
+        <div class="session-item-layout">
+          <div class="session-item-photo-wrap">
+            <img id="sessionItemPhoto" class="session-item-photo" alt="Captured component">
+          </div>
+          <div class="session-item-fields">
+            <label class="field-label" for="sessionItemName">Part name</label>
+            <input id="sessionItemName" class="text-input" type="text" autocomplete="off">
+            <label class="field-label" for="sessionItemMarking">Recognized marking</label>
+            <textarea id="sessionItemMarking" class="text-input session-item-textarea" rows="3"></textarea>
+            <label class="field-label" for="sessionItemManufacturer">Manufacturer</label>
+            <input id="sessionItemManufacturer" class="text-input" type="text" autocomplete="organization">
+            <label class="field-label" for="sessionItemDescription">Description</label>
+            <textarea id="sessionItemDescription" class="text-input session-item-textarea" rows="3"></textarea>
+            <label class="field-label" for="sessionItemDatasheet">Datasheet URL</label>
+            <input id="sessionItemDatasheet" class="text-input" type="url" inputmode="url">
+            <label class="field-label" for="sessionItemPinout">Pinout / notes</label>
+            <textarea id="sessionItemPinout" class="text-input session-item-textarea" rows="3"></textarea>
+            <p id="sessionItemCaptureInfo" class="session-item-meta"></p>
+            <p id="sessionItemStatus" class="status-line" role="status" aria-live="polite"></p>
+          </div>
+        </div>
+        <div class="dialog-actions">
+          <button class="button button-outline" type="button" data-close-dialog="sessionItemDialog">Cancel</button>
+          <button id="saveSessionItemButton" class="button button-primary" type="submit">Save details</button>
+        </div>
+      </form>
     </dialog>
 
     <dialog id="deleteDialog" class="dialog-card confirm-dialog">

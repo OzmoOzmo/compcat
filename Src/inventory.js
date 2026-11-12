@@ -80,7 +80,7 @@ export async function addAcceptedCandidates(candidatesToSave) {
       const componentIds = new Map(
         componentRequest.result
           .filter((component) => component.normalizedName)
-          .map((component) => [component.normalizedName, component.id])
+          .map((component) => [component.normalizedName, component])
       );
       let candidateIndex = 0;
 
@@ -89,26 +89,41 @@ export async function addAcceptedCandidates(candidatesToSave) {
         const candidate = candidatesToSave[candidateIndex];
         candidateIndex += 1;
         const normalizedName = normalizeMarking(candidate.name || candidate.marking);
-        const existingId = normalizedName ? componentIds.get(normalizedName) : undefined;
-        if (existingId !== undefined) {
-          saveItem(candidate, existingId, saveNext);
+        const existingComponent = normalizedName ? componentIds.get(normalizedName) : undefined;
+        if (existingComponent) {
+          const details = {
+            description: existingComponent.description || candidate.description || "",
+            manufacturer: existingComponent.manufacturer || candidate.manufacturer || "",
+            datasheetUrl: existingComponent.datasheetUrl || candidate.datasheetUrl || "",
+            pinout: existingComponent.pinout || candidate.pinout || ""
+          };
+          if (Object.keys(details).some((key) => details[key] !== existingComponent[key])) {
+            const updateRequest = components.put({ ...existingComponent, ...details });
+            updateRequest.onerror = () => transaction.abort();
+            updateRequest.onsuccess = () => {
+              componentIds.set(normalizedName, { ...existingComponent, ...details });
+              saveItem(candidate, existingComponent.id, saveNext);
+            };
+            return;
+          }
+          saveItem(candidate, existingComponent.id, saveNext);
           return;
         }
 
         const component = {
           name: String(candidate.name || candidate.marking || "Unidentified component").trim(),
           normalizedName,
-          description: "",
-          manufacturer: "",
-          datasheetUrl: "",
-          pinout: "",
+          description: candidate.description || "",
+          manufacturer: candidate.manufacturer || "",
+          datasheetUrl: candidate.datasheetUrl || "",
+          pinout: candidate.pinout || "",
           createdAt: candidate.capturedAt ?? new Date().toISOString()
         };
         const addRequest = components.add(component);
         addRequest.onerror = () => transaction.abort();
         addRequest.onsuccess = () => {
           const componentId = addRequest.result;
-          if (normalizedName) componentIds.set(normalizedName, componentId);
+          if (normalizedName) componentIds.set(normalizedName, { ...component, id: componentId });
           saveItem(candidate, componentId, saveNext);
         };
       };
@@ -249,6 +264,15 @@ export function duplicateSuggestions(candidates, inventory) {
     }
   }
   return suggestions;
+}
+
+export function reviewCandidateIds(candidates, inventory) {
+  const duplicates = duplicateSuggestions(candidates, inventory);
+  return new Set(
+    candidates
+      .filter((candidate) => duplicates.has(candidate.id) || suspectedBad(candidate))
+      .map((candidate) => candidate.id)
+  );
 }
 
 export function suspectedBad(candidate) {

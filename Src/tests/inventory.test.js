@@ -5,6 +5,7 @@ import {
   duplicateSuggestions,
   filterInventory,
   paginate,
+  reviewCandidateIds,
   suspectedBad
 } from "../inventory.js";
 
@@ -29,6 +30,24 @@ test("highlights every member of a repeated in-batch marking", () => {
   ], []);
   assert.match(suggestions.get("first"), /more than once/);
   assert.match(suggestions.get("second"), /more than once/);
+});
+
+test("selects duplicate and low-confidence session scans for review", () => {
+  const candidates = [
+    { id: "duplicate-one", name: "LM358", marking: "LM358", confidence: 0.9 },
+    { id: "duplicate-two", name: "LM358", marking: "LM358", confidence: 0.9 },
+    { id: "low-confidence", name: "NE555", marking: "NE555", confidence: 0.4 },
+    { id: "good", name: "CD4011", marking: "CD4011", confidence: 0.9 }
+  ];
+
+  assert.deepEqual(
+    [...reviewCandidateIds(candidates, [])].sort(),
+    ["duplicate-one", "duplicate-two", "low-confidence"]
+  );
+  assert.deepEqual(
+    [...reviewCandidateIds([candidates[0], candidates[3]], [{ normalizedName: "LM358" }])],
+    ["duplicate-one"]
+  );
 });
 
 test("exports an inventory in the sample Markdown shape with captured quantities", () => {

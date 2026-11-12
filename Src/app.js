@@ -11,6 +11,7 @@ import {
   openInventory,
   paginate,
   putSessionCandidate,
+  reviewCandidateIds,
   suspectedBad,
   updateComponentDetails,
   downloadMarkdown,
@@ -30,11 +31,13 @@ const state = {
   inventory: [],
   candidateUrls: new Map(),
   selectedCandidateIds: new Set(),
+  dismissedIssueSelectionIds: new Set(),
   historyPage: 1,
   historyPageSize: DEFAULT_PAGE_SIZE,
   processing: false,
   detailRequests: new Set(),
-  pendingDeleteId: null
+  pendingDeleteId: null,
+  editingCandidateId: null
 };
 
 function setStatus(element, message, kind = "") {
@@ -154,34 +157,23 @@ function formatTime(value) {
     : `${formatDate(value, { month: "short", day: "numeric" })} · ${date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}`;
 }
 
-function updateSessionDuplicateFlags() {
-  const suggestions = duplicateSuggestions(state.candidates, state.inventory);
-  const rows = byId("sessionTableBody").querySelectorAll("[data-candidate-id]");
-  for (const row of rows) {
-    const candidate = state.candidates.find((item) => item.id === row.dataset.candidateId);
-    const duplicate = suggestions.get(row.dataset.candidateId);
-    const bad = candidate && suspectedBad(candidate);
-    row.classList.toggle("row-duplicate", Boolean(duplicate));
-    row.classList.toggle("row-suspect", Boolean(bad));
-    const status = row.querySelector(".row-status");
-    status.replaceChildren();
-    if (duplicate) status.append(createElement("span", "status-chip duplicate-chip", "Duplicate"));
-    if (bad) status.append(createElement("span", "status-chip suspect-chip", "Check marking"));
-    if (!duplicate && !bad) status.append(createElement("span", "status-chip review-chip", "Review"));
-    row.title = [duplicate, bad ? "Marking is empty or OCR confidence is low." : ""].filter(Boolean).join(" ");
-  }
-}
-
 function renderSession() {
   updateTabCounts();
   const body = byId("sessionTableBody");
   body.replaceChildren();
   releaseUrls();
   const candidateIds = new Set(state.candidates.map((candidate) => candidate.id));
+  const suggestions = duplicateSuggestions(state.candidates, state.inventory);
+  const issueIds = reviewCandidateIds(state.candidates, state.inventory);
+  for (const id of [...state.dismissedIssueSelectionIds]) {
+    if (!issueIds.has(id)) state.dismissedIssueSelectionIds.delete(id);
+  }
+  for (const id of issueIds) {
+    if (!state.dismissedIssueSelectionIds.has(id)) state.selectedCandidateIds.add(id);
+  }
   state.selectedCandidateIds = new Set(
     [...state.selectedCandidateIds].filter((id) => candidateIds.has(id))
   );
-  const suggestions = duplicateSuggestions(state.candidates, state.inventory);
 
   for (const candidate of state.candidates) {
     const row = document.createElement("tr");
@@ -194,18 +186,26 @@ function renderSession() {
     selectCheckbox.checked = state.selectedCandidateIds.has(candidate.id);
     selectCheckbox.setAttribute("aria-label", `Select session scan ${candidate.name || candidate.marking || ""}`);
     selectCheckbox.addEventListener("change", () => {
-      if (selectCheckbox.checked) state.selectedCandidateIds.add(candidate.id);
-      else state.selectedCandidateIds.delete(candidate.id);
+      if (selectCheckbox.checked) {
+        state.selectedCandidateIds.add(candidate.id);
+        state.dismissedIssueSelectionIds.delete(candidate.id);
+      } else {
+        state.selectedCandidateIds.delete(candidate.id);
+        if (issueIds.has(candidate.id)) state.dismissedIssueSelectionIds.add(candidate.id);
+      }
       row.classList.toggle("row-selected", selectCheckbox.checked);
       updateSessionSelectionControls();
     });
     selectCell.append(selectCheckbox);
     const photoCell = document.createElement("td");
-    const thumbnail = createElement("span", "session-thumbnail");
+    const thumbnail = createElement("button", "session-thumbnail session-thumbnail-button");
+    thumbnail.type = "button";
+    thumbnail.setAttribute("aria-label", `View and edit scan ${candidate.name || candidate.marking || ""}`);
+    thumbnail.addEventListener("click", () => showSessionCandidate(candidate));
     if (candidate.photo) {
       const image = document.createElement("img");
       image.src = createPhotoUrl(candidate);
-      image.alt = "";
+      image.alt = `Captured ${candidate.name || "component"}`;
       thumbnail.append(image);
     } else {
       thumbnail.textContent = "IC";
@@ -223,7 +223,7 @@ function renderSession() {
       candidate.name = nameInput.value.trim();
       try {
         await putSessionCandidate(candidate);
-        updateSessionDuplicateFlags();
+        renderSession();
       } catch (error) {
         setNotice(byId("sessionNotice"), `Could not save your edit: ${error.message}`, "error");
       }
@@ -277,6 +277,9 @@ function renderSession() {
   }
 
   const hasCandidates = state.candidates.length > 0;
+  for (const id of [...state.dismissedIssueSelectionIds]) {
+    if (!candidateIds.has(id)) state.dismissedIssueSelectionIds.delete(id);
+  }
   byId("sessionEmpty").hidden = hasCandidates;
   byId("deleteAllSessionButton").disabled = !hasCandidates || state.processing;
   byId("archiveButton").disabled = !hasCandidates;
@@ -288,6 +291,60 @@ function renderSession() {
   byId("sessionFooterCount").parentElement.hidden = !hasCandidates;
   updateSessionSelectionControls();
   if (!hasCandidates) setNotice(byId("sessionNotice"), "");
+}
+
+function showSessionCandidate(candidate) {
+  state.editingCandidateId = candidate.id;
+  byId("sessionItemTitle").textContent = candidate.name || "Unidentified component";
+  byId("sessionItemPhoto").src = candidate.photo ? createPhotoUrl(candidate) : "";
+  byId("sessionItemPhoto").hidden = !candidate.photo;
+  byId("sessionItemName").value = candidate.name || "";
+  byId("sessionItemMarking").value = candidate.marking || "";
+  byId("sessionItemManufacturer").value = candidate.manufacturer || "";
+  byId("sessionItemDescription").value = candidate.description || "";
+  byId("sessionItemDatasheet").value = candidate.datasheetUrl || "";
+  byId("sessionItemPinout").value = candidate.pinout || "";
+  byId("sessionItemCaptureInfo").textContent =
+    `Captured ${formatTime(candidate.capturedAt)} · OCR confidence ${Math.round((candidate.confidence || 0) * 100)}%`;
+  setStatus(byId("sessionItemStatus"), "");
+  byId("saveSessionItemButton").disabled = false;
+  byId("sessionItemDialog").showModal();
+  byId("sessionItemName").focus();
+}
+
+async function saveSessionCandidateDetails(event) {
+  event.preventDefault();
+  const candidate = state.candidates.find((item) => item.id === state.editingCandidateId);
+  if (!candidate) {
+    setStatus(byId("sessionItemStatus"), "This scan is no longer in the session.", "error");
+    return;
+  }
+
+  const button = byId("saveSessionItemButton");
+  button.disabled = true;
+  const updatedCandidate = {
+    ...candidate,
+    name: byId("sessionItemName").value.trim(),
+    marking: byId("sessionItemMarking").value.trim(),
+    manufacturer: byId("sessionItemManufacturer").value.trim(),
+    description: byId("sessionItemDescription").value.trim(),
+    datasheetUrl: byId("sessionItemDatasheet").value.trim(),
+    pinout: byId("sessionItemPinout").value.trim()
+  };
+
+  try {
+    await putSessionCandidate(updatedCandidate);
+    state.candidates = state.candidates.map((item) =>
+      item.id === updatedCandidate.id ? updatedCandidate : item
+    );
+    byId("sessionItemTitle").textContent = updatedCandidate.name || "Unidentified component";
+    renderSession();
+    setStatus(byId("sessionItemStatus"), "Details saved to this device.", "success");
+  } catch (error) {
+    setStatus(byId("sessionItemStatus"), `Could not save your changes: ${error.message || "local storage unavailable"}.`, "error");
+  } finally {
+    button.disabled = false;
+  }
 }
 
 function updateSessionSelectionControls() {
@@ -840,14 +897,19 @@ function attachEvents() {
   byId("openSessionButton").addEventListener("click", () => activateTab("session"));
   byId("sessionScanButton").addEventListener("click", showScanner);
   byId("sessionSelectAll").addEventListener("change", () => {
-    state.selectedCandidateIds = byId("sessionSelectAll").checked
+    const selectAll = byId("sessionSelectAll").checked;
+    state.selectedCandidateIds = selectAll
       ? new Set(state.candidates.map((candidate) => candidate.id))
       : new Set();
+    state.dismissedIssueSelectionIds = selectAll
+      ? new Set()
+      : reviewCandidateIds(state.candidates, state.inventory);
     renderSession();
   });
   byId("deleteSelectedSessionButton").addEventListener("click", deleteSelectedSessionScans);
   byId("deleteAllSessionButton").addEventListener("click", deleteAllSessionScans);
   byId("archiveButton").addEventListener("click", archiveSession);
+  byId("sessionItemForm").addEventListener("submit", saveSessionCandidateDetails);
   byId("historySearch").addEventListener("input", () => {
     state.historyPage = 1;
     renderHistory();
