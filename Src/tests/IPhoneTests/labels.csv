@@ -1,0 +1,12 @@
+# Marking rows: file,expected text; resistor rows: file,resistor-bands|value|... or file,resistor-reference|value|...
+555-Timer.jpg,NE555P
+IMG_3067.JPEG,AD767JN
+IMG_3068.JPEG,AD767JN
+IMG_3069.JPEG,LTV4N35 (2 off)
+IMG_3070.JPEG,NEC JAPAN E95019-918 D4104D -2
+IMG_3071.JPEG,MJ15024 MEXICO 9926 (2 off)
+IMG_3072.JPEG,AD582KD 9013
+IMG_3073.JPEG,IC (Partial) "D582KD 9013" Transistor:"TDA 2006" Transistor:"2030 242 A42"  Capacitor:"16V 150uF"
+IMG_3074.JPEG, Transistor:"TDA 2006" Transistor:"242 A42" Capacitor:"10v 1200uF"
+Screenshot 2026-11-12 152230.png,resistor-bands|39 kΩ ±5%|47 Ω ±5%|1.5 kΩ ±5%|100 Ω ±5%|2.2 kΩ ±5%|47 kΩ ±5%
+Screenshot 2026-11-12 152512.png,resistor-reference|100 kΩ ±5%|120 kΩ ±5%|150 kΩ ±5%|180 kΩ ±5%|220 kΩ ±5%|270 kΩ ±5%|330 kΩ ±5%|390 kΩ ±5%|470 kΩ ±5%|560 kΩ ±5%|680 kΩ ±5%|820 kΩ ±5%

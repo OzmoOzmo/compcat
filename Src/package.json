@@ -2,6 +2,6 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test tests/vision.test.js tests/inventory.test.js tests/ocr.test.js tests/gemini.test.js"
+    "test": "node --test tests/vision.test.js tests/inventory.test.js tests/ocr.test.js tests/gemini.test.js tests/resistor-code.test.js"
   }
 }

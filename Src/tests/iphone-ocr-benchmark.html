@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>iPhone photo OCR benchmark</title>
+    <link rel="stylesheet" href="../styles.css">
+    <script type="module" src="./iphone-ocr-benchmark.js?v=7"></script>
+  </head>
+  <body>
+    <main>
+      <p class="eyebrow">TEST TOOLS</p>
+      <h1>iPhone photo OCR benchmark</h1>
+      <p>Runs the current browser detector and OCR against the photos in <code>IPhoneTests</code> without changing inventory.</p>
+      <button id="runBenchmark" class="button button-primary" type="button">Run iPhone test photos</button>
+      <p id="benchmarkStatus" role="status" aria-live="polite">Ready.</p>
+      <progress id="benchmarkProgress" max="9" value="0" hidden></progress>
+      <div id="benchmarkSummary" aria-live="polite"></div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr><th>Photo</th><th>Expected markings</th><th>Detected regions</th><th>OCR result</th><th>Expected tokens read</th></tr>
+          </thead>
+          <tbody id="benchmarkRows"></tbody>
+        </table>
+      </div>
+    </main>
+  </body>
+</html>

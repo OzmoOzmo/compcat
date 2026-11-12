@@ -1,6 +1,8 @@
 import {
   addAcceptedCandidates,
+  clearSessionCandidates,
   deleteInventoryComponent,
+  deleteSessionCandidates,
   deleteSessionCandidate,
   duplicateSuggestions,
   filterInventory,
@@ -27,8 +29,10 @@ const state = {
   candidates: [],
   inventory: [],
   candidateUrls: new Map(),
+  selectedCandidateIds: new Set(),
   historyPage: 1,
   historyPageSize: DEFAULT_PAGE_SIZE,
+  processing: false,
   detailRequests: new Set(),
   pendingDeleteId: null
 };
@@ -84,7 +88,10 @@ function normalizeTab(tabName) {
 
 function activateTab(tabName, options = {}) {
   const target = normalizeTab(tabName);
-  if (target !== "tools" && state.stream) stopCamera();
+  if (target !== "tools") {
+    document.body.classList.remove("scanner-open");
+    if (state.stream) stopCamera();
+  }
 
   for (const name of ["tools", "session", "history", "about", "config"]) {
     const active = name === target;
@@ -170,11 +177,29 @@ function renderSession() {
   const body = byId("sessionTableBody");
   body.replaceChildren();
   releaseUrls();
+  const candidateIds = new Set(state.candidates.map((candidate) => candidate.id));
+  state.selectedCandidateIds = new Set(
+    [...state.selectedCandidateIds].filter((id) => candidateIds.has(id))
+  );
   const suggestions = duplicateSuggestions(state.candidates, state.inventory);
 
   for (const candidate of state.candidates) {
     const row = document.createElement("tr");
     row.dataset.candidateId = candidate.id;
+    row.classList.toggle("row-selected", state.selectedCandidateIds.has(candidate.id));
+    const selectCell = document.createElement("td");
+    selectCell.className = "selection-cell";
+    const selectCheckbox = createElement("input", "session-select-checkbox");
+    selectCheckbox.type = "checkbox";
+    selectCheckbox.checked = state.selectedCandidateIds.has(candidate.id);
+    selectCheckbox.setAttribute("aria-label", `Select session scan ${candidate.name || candidate.marking || ""}`);
+    selectCheckbox.addEventListener("change", () => {
+      if (selectCheckbox.checked) state.selectedCandidateIds.add(candidate.id);
+      else state.selectedCandidateIds.delete(candidate.id);
+      row.classList.toggle("row-selected", selectCheckbox.checked);
+      updateSessionSelectionControls();
+    });
+    selectCell.append(selectCheckbox);
     const photoCell = document.createElement("td");
     const thumbnail = createElement("span", "session-thumbnail");
     if (candidate.photo) {
@@ -247,12 +272,13 @@ function renderSession() {
     deleteButton.setAttribute("aria-label", `Delete session scan ${candidate.name || candidate.marking || ""}`);
     deleteButton.addEventListener("click", () => deleteSessionScan(candidate));
     actionCell.append(deleteButton);
-    row.append(photoCell, nameCell, markingCell, confidenceCell, capturedCell, statusCell, actionCell);
+    row.append(selectCell, photoCell, nameCell, markingCell, confidenceCell, capturedCell, statusCell, actionCell);
     body.append(row);
   }
 
   const hasCandidates = state.candidates.length > 0;
   byId("sessionEmpty").hidden = hasCandidates;
+  byId("deleteAllSessionButton").disabled = !hasCandidates || state.processing;
   byId("archiveButton").disabled = !hasCandidates;
   byId("sessionSummary").textContent = hasCandidates
     ? `${hasCandidates ? state.candidates.length : 0} pending scan${state.candidates.length === 1 ? "" : "s"}`
@@ -260,7 +286,22 @@ function renderSession() {
   byId("sessionTableBody").closest(".table-scroll").hidden = !hasCandidates;
   byId("sessionSummary").closest(".table-toolbar").hidden = !hasCandidates;
   byId("sessionFooterCount").parentElement.hidden = !hasCandidates;
+  updateSessionSelectionControls();
   if (!hasCandidates) setNotice(byId("sessionNotice"), "");
+}
+
+function updateSessionSelectionControls() {
+  const total = state.candidates.length;
+  const selected = state.selectedCandidateIds.size;
+  const selectAll = byId("sessionSelectAll");
+  selectAll.checked = total > 0 && selected === total;
+  selectAll.indeterminate = selected > 0 && selected < total;
+  selectAll.disabled = total === 0 || state.processing;
+  byId("deleteSelectedSessionButton").disabled = selected === 0 || state.processing;
+  byId("deleteAllSessionButton").disabled = total === 0 || state.processing;
+  byId("sessionSummary").textContent = total
+    ? `${total} pending scan${total === 1 ? "" : "s"}${selected ? ` · ${selected} selected` : ""}`
+    : "No scans yet";
 }
 
 function renderHistory() {
@@ -434,8 +475,22 @@ async function processPhoto(blob, label) {
     const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
     const { regions } = detectComponentBounds(imageData.data, canvas.width, canvas.height);
     if (regions.length === 0) {
-      setStatus(byId("captureStatus"), `No separate component was found in ${label}. Try a plain, contrasting background.`);
-      return 0;
+      setStatus(byId("captureStatus"), `No separate component was found in ${label}. Trying OCR on the full photo…`);
+      const recognition = await recognizeComponent(canvas);
+      const marking = recognition.text.trim();
+      const firstLine = marking.split("\n").map((line) => line.trim()).find(Boolean) ?? "";
+      const candidate = {
+        id: globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        name: firstLine,
+        marking,
+        confidence: recognition.confidence,
+        photo: await canvasToBlob(canvas),
+        capturedAt: new Date().toISOString()
+      };
+      await putSessionCandidate(candidate);
+      state.candidates.push(candidate);
+      renderSession();
+      return 1;
     }
 
     let added = 0;
@@ -467,6 +522,7 @@ async function processPhoto(blob, label) {
 async function processPhotoBatch(files) {
   if (state.processing) return;
   state.processing = true;
+  renderSession();
   byId("captureNowButton").disabled = true;
   byId("scannerChoosePhotosButton").disabled = true;
   byId("progressTrack").hidden = false;
@@ -503,14 +559,32 @@ function showScanner() {
   activateTab("tools");
   byId("toolsLanding").hidden = true;
   byId("scannerPanel").hidden = false;
+  document.body.classList.add("scanner-open");
   if (state.stream) return;
   startCamera();
 }
 
 function closeScanner() {
   stopCamera();
+  document.body.classList.remove("scanner-open");
   byId("scannerPanel").hidden = true;
   byId("toolsLanding").hidden = false;
+}
+
+function updateCameraZoomControl(track) {
+  const control = byId("cameraZoomControl");
+  const zoom = byId("cameraZoom");
+  const capabilities = track.getCapabilities?.();
+  if (!capabilities || !capabilities.zoom || capabilities.zoom.max <= capabilities.zoom.min) {
+    control.hidden = true;
+    return;
+  }
+  const settings = track.getSettings?.();
+  zoom.min = String(capabilities.zoom.min);
+  zoom.max = String(capabilities.zoom.max);
+  zoom.step = String(capabilities.zoom.step || 0.1);
+  zoom.value = String(settings?.zoom ?? capabilities.zoom.min);
+  control.hidden = false;
 }
 
 async function startCamera() {
@@ -524,8 +598,9 @@ async function startCamera() {
   try {
     state.stream = await navigator.mediaDevices.getUserMedia({
       audio: false,
-      video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } }
+      video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 } }
     });
+    updateCameraZoomControl(state.stream.getVideoTracks()[0]);
     byId("cameraPreview").srcObject = state.stream;
     await byId("cameraPreview").play();
     byId("cameraPreview").hidden = false;
@@ -559,6 +634,8 @@ function stopCamera() {
   }
   const placeholder = byId("cameraPlaceholder");
   if (placeholder) placeholder.hidden = false;
+  const zoomControl = byId("cameraZoomControl");
+  if (zoomControl) zoomControl.hidden = true;
   const capture = byId("captureNowButton");
   if (capture) capture.disabled = true;
 }
@@ -598,9 +675,55 @@ async function deleteSessionScan(candidate) {
   try {
     await deleteSessionCandidate(candidate.id);
     state.candidates = state.candidates.filter((item) => item.id !== candidate.id);
+    state.selectedCandidateIds.delete(candidate.id);
     renderSession();
   } catch (error) {
     setNotice(byId("sessionNotice"), error.message || "Could not delete the session scan.", "error");
+  }
+}
+
+async function deleteSelectedSessionScans() {
+  if (state.processing || state.selectedCandidateIds.size === 0) return;
+  const candidates = state.candidates.filter((candidate) => state.selectedCandidateIds.has(candidate.id));
+  const count = candidates.length;
+  if (!count) return;
+  const noun = count === 1 ? "scan" : "scans";
+  if (!window.confirm(`Permanently delete the ${count} selected session ${noun}? This cannot be undone.`)) return;
+
+  const button = byId("deleteSelectedSessionButton");
+  button.disabled = true;
+  try {
+    await deleteSessionCandidates(candidates.map((candidate) => candidate.id));
+    const deletedIds = new Set(candidates.map((candidate) => candidate.id));
+    state.candidates = state.candidates.filter((candidate) => !deletedIds.has(candidate.id));
+    state.selectedCandidateIds.clear();
+    renderSession();
+    setNotice(byId("sessionNotice"), `Deleted ${count} selected session ${noun}.`, "success");
+  } catch (error) {
+    setNotice(byId("sessionNotice"), error.message || "Could not delete the selected session scans.", "error");
+  } finally {
+    updateSessionSelectionControls();
+  }
+}
+
+async function deleteAllSessionScans() {
+  if (state.processing || state.candidates.length === 0) return;
+  const count = state.candidates.length;
+  const noun = count === 1 ? "scan" : "scans";
+  if (!window.confirm(`Permanently delete all ${count} ${noun} in this session? This cannot be undone.`)) return;
+
+  const button = byId("deleteAllSessionButton");
+  button.disabled = true;
+  try {
+    await clearSessionCandidates();
+    state.candidates = [];
+    state.selectedCandidateIds.clear();
+    renderSession();
+    setNotice(byId("sessionNotice"), `Deleted all ${count} session ${noun}.`, "success");
+  } catch (error) {
+    setNotice(byId("sessionNotice"), error.message || "Could not delete all session scans.", "error");
+  } finally {
+    button.disabled = state.candidates.length === 0 || state.processing;
   }
 }
 
@@ -611,6 +734,7 @@ async function archiveSession() {
   try {
     await addAcceptedCandidates(state.candidates);
     state.candidates = [];
+    state.selectedCandidateIds.clear();
     await refreshData();
     setNotice(byId("historyNotice"), `${count} scan${count === 1 ? "" : "s"} archived to History.`, "success");
     activateTab("history");
@@ -698,6 +822,15 @@ function attachEvents() {
   }
   byId("openScannerButton").addEventListener("click", showScanner);
   byId("enableCameraButton").addEventListener("click", startCamera);
+  byId("cameraZoom").addEventListener("change", async (event) => {
+    const track = state.stream?.getVideoTracks()[0];
+    if (!track) return;
+    try {
+      await track.applyConstraints({ advanced: [{ zoom: Number(event.target.value) }] });
+    } catch (error) {
+      setStatus(byId("captureStatus"), `Could not change camera zoom: ${error.message || "zoom is unavailable"}.`, "error");
+    }
+  });
   byId("closeScannerButton").addEventListener("click", closeScanner);
   byId("captureNowButton").addEventListener("click", captureCurrentFrame);
   byId("scannerChoosePhotosButton").addEventListener("click", () => byId("scannerFileInput").click());
@@ -706,6 +839,14 @@ function attachEvents() {
   byId("scannerFileInput").addEventListener("change", processPickedFiles);
   byId("openSessionButton").addEventListener("click", () => activateTab("session"));
   byId("sessionScanButton").addEventListener("click", showScanner);
+  byId("sessionSelectAll").addEventListener("change", () => {
+    state.selectedCandidateIds = byId("sessionSelectAll").checked
+      ? new Set(state.candidates.map((candidate) => candidate.id))
+      : new Set();
+    renderSession();
+  });
+  byId("deleteSelectedSessionButton").addEventListener("click", deleteSelectedSessionScans);
+  byId("deleteAllSessionButton").addEventListener("click", deleteAllSessionScans);
   byId("archiveButton").addEventListener("click", archiveSession);
   byId("historySearch").addEventListener("input", () => {
     state.historyPage = 1;

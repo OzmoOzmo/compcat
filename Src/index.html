@@ -2,13 +2,13 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes, viewport-fit=cover">
     <meta name="theme-color" content="#101b2d">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' blob: data:; connect-src 'self' https://cdn.jsdelivr.net https://tessdata.projectnaptha.com https://generativelanguage.googleapis.com; worker-src 'self' blob: https://cdn.jsdelivr.net; media-src 'self' blob:">
     <meta name="description" content="Capture, identify, and organize electronic components in your browser.">
     <title>Component Log</title>
-    <link rel="stylesheet" href="./styles.css">
-    <script type="module" src="./app.js?v=9"></script>
+    <link rel="stylesheet" href="./styles.css?v=4">
+    <script type="module" src="./app.js?v=14"></script>
   </head>
   <body>
     <header class="site-header">
@@ -128,6 +128,10 @@
               <button id="enableCameraButton" class="button button-secondary" type="button">Enable camera</button>
             </div>
             <div class="camera-label"><span class="live-dot"></span> Camera preview</div>
+            <label id="cameraZoomControl" class="camera-zoom-control" hidden>
+              <span>Zoom</span>
+              <input id="cameraZoom" type="range" min="1" max="1" step="0.1" value="1" aria-label="Camera zoom">
+            </label>
           </div>
           <div class="scanner-controls">
             <button id="captureNowButton" class="button button-primary capture-button" type="button" disabled>
@@ -153,6 +157,8 @@
           </div>
           <div class="panel-actions">
             <button id="sessionScanButton" class="button button-secondary" type="button">Scan more</button>
+            <button id="deleteSelectedSessionButton" class="button button-danger" type="button" disabled>Delete selected</button>
+            <button id="deleteAllSessionButton" class="button button-danger" type="button" disabled>Delete all</button>
             <button id="archiveButton" class="button button-primary" type="button" disabled>
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3h16a1 1 0 0 1 1 1v4H3V4a1 1 0 0 1 1-1Zm-1 7h18v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V10Zm5 3v2h8v-2H8Z"/></svg>
               Archive session
@@ -166,7 +172,7 @@
         </div>
         <div class="table-scroll">
           <table class="data-table session-table">
-            <thead><tr><th>Photo</th><th>Part / marking</th><th>Recognized text</th><th>Confidence</th><th>Captured</th><th>Status</th><th><span class="visually-hidden">Actions</span></th></tr></thead>
+            <thead><tr><th class="selection-cell"><input id="sessionSelectAll" class="session-select-checkbox" type="checkbox" aria-label="Select all session scans" disabled></th><th>Photo</th><th>Part / marking</th><th>Recognized text</th><th>Confidence</th><th>Captured</th><th>Status</th><th><span class="visually-hidden">Actions</span></th></tr></thead>
             <tbody id="sessionTableBody"></tbody>
           </table>
         </div>

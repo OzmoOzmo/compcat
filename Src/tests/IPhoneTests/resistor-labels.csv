@@ -1,0 +1,19 @@
+image,example,bands_from_digit_end_to_tolerance,ohms,tolerance_percent,split
+Screenshot 2026-11-12 152512.png,100k reference,brown-black-yellow-gold,100000,5,train
+Screenshot 2026-11-12 152512.png,120k reference,brown-red-yellow-gold,120000,5,train
+Screenshot 2026-11-12 152512.png,150k reference,brown-green-yellow-gold,150000,5,train
+Screenshot 2026-11-12 152512.png,180k reference,brown-gray-yellow-gold,180000,5,train
+Screenshot 2026-11-12 152512.png,220k reference,red-red-yellow-gold,220000,5,train
+Screenshot 2026-11-12 152512.png,270k reference,red-violet-yellow-gold,270000,5,train
+Screenshot 2026-11-12 152512.png,330k reference,orange-orange-yellow-gold,330000,5,train
+Screenshot 2026-11-12 152512.png,390k reference,orange-white-yellow-gold,390000,5,train
+Screenshot 2026-11-12 152512.png,470k reference,yellow-violet-yellow-gold,470000,5,train
+Screenshot 2026-11-12 152512.png,560k reference,green-blue-yellow-gold,560000,5,train
+Screenshot 2026-11-12 152512.png,680k reference,blue-gray-yellow-gold,680000,5,train
+Screenshot 2026-11-12 152512.png,820k reference,gray-red-yellow-gold,820000,5,train
+Screenshot 2026-11-12 152230.png,resistor 1 left to right,orange-white-orange-gold,39000,5,test
+Screenshot 2026-11-12 152230.png,resistor 2 left to right,yellow-violet-black-gold,47,5,test
+Screenshot 2026-11-12 152230.png,resistor 3 left to right,brown-green-red-gold,1500,5,test
+Screenshot 2026-11-12 152230.png,resistor 4 left to right,brown-black-brown-gold,100,5,test
+Screenshot 2026-11-12 152230.png,resistor 5 left to right,red-red-red-gold,2200,5,test
+Screenshot 2026-11-12 152230.png,resistor 6 left to right,yellow-violet-orange-gold,47000,5,test

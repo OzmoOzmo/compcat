@@ -164,6 +164,19 @@ export async function deleteSessionCandidate(id) {
   });
 }
 
+export async function deleteSessionCandidates(ids) {
+  if (ids.length === 0) return;
+  const database = await openInventory();
+  const transaction = database.transaction("sessionCandidates", "readwrite");
+  const store = transaction.objectStore("sessionCandidates");
+  for (const id of ids) store.delete(id);
+  return new Promise((resolve, reject) => {
+    transaction.oncomplete = resolve;
+    transaction.onabort = () => reject(transaction.error ?? new Error("Could not delete the selected session scans."));
+    transaction.onerror = () => reject(transaction.error ?? new Error("Could not delete the selected session scans."));
+  });
+}
+
 export async function clearSessionCandidates() {
   const database = await openInventory();
   const transaction = database.transaction("sessionCandidates", "readwrite");
