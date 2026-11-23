@@ -4,26 +4,28 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Component Log OCR benchmark</title>
-    <link rel="stylesheet" href="../styles.css">
-    <script type="module" src="./ocr-benchmark.js?v=4"></script>
+    <link rel="stylesheet" href="../styles.css?v=2">
+    <script type="module" src="./ocr-benchmark.js?v=6"></script>
   </head>
   <body>
     <main>
       <p class="eyebrow">TEST TOOLS</p>
       <h1>OCR benchmark</h1>
-      <p>Runs the browser OCR against the 96 labeled sample photos without changing your inventory.</p>
-      <button id="runBenchmark" class="button button-primary" type="button">Run all 96 photos</button>
+      <p>Runs browser OCR against the consolidated photos in <code>TrainingData/training/images</code>. Expected text is read from each image's filename.</p>
+      <button id="runBenchmark" class="button button-primary" type="button">Run all training photos</button>
       <p id="benchmarkStatus" role="status" aria-live="polite">Ready.</p>
-      <progress id="benchmarkProgress" max="96" value="0" hidden></progress>
+      <progress id="benchmarkProgress" max="238" value="0" hidden></progress>
       <div id="benchmarkSummary" aria-live="polite"></div>
       <div class="table-scroll">
         <table>
           <thead>
             <tr>
               <th>Photo</th>
-              <th>Expected</th>
+              <th>Expected filename label</th>
+              <th>Detected regions</th>
               <th>OCR result</th>
-              <th>Exact</th>
+              <th>Matched labels</th>
+              <th>Image hit</th>
               <th>Within one edit</th>
             </tr>
           </thead>

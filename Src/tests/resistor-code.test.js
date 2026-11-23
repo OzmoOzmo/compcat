@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 import { decodeResistorBands, formatResistorValue } from "../resistor-code.js";
 
 async function loadLabeledExamples() {
-  const csv = await readFile(new URL("./IPhoneTests/resistor-labels.csv", import.meta.url), "utf8");
+  const csv = await readFile(new URL("../TrainingData/IPhoneTests/resistor-labels.csv", import.meta.url), "utf8");
   return csv.trim().split(/\r?\n/).slice(1).map((line) => {
     const [image, example, bands, ohms, tolerance, split] = line.split(",");
     return {
